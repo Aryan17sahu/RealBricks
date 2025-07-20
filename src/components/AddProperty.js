@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-const AddProperty = () => {
-  const [property, setProperty] = useState({
+const PropertyList = () => {
+  const [properties, setProperties] = useState([]);
+  const [editingProperty, setEditingProperty] = useState(null);
+  const [editedData, setEditedData] = useState({
     title: "",
     description: "",
     price: "",
@@ -10,86 +12,174 @@ const AddProperty = () => {
     type: "RENT",
   });
 
-  const handleChange = (e) => {
-    setProperty({ ...property, [e.target.name]: e.target.value });
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  const fetchProperties = async () => {
+    try {
+      const response = await axios.get("http://localhost:8080/api/properties");
+      setProperties(response.data);
+    } catch (error) {
+      console.error("Error fetching properties:", error);
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const deleteProperty = async (id) => {
+    if (window.confirm("Are you sure you want to delete this property?")) {
+      try {
+        await axios.delete(`http://localhost:8080/api/properties/${id}`);
+        alert("Property deleted!");
+        fetchProperties();
+      } catch (error) {
+        console.error("Error deleting property:", error);
+      }
+    }
+  };
+
+  const startEditing = (property) => {
+    setEditingProperty(property.id);
+    setEditedData({ ...property });
+  };
+
+  const handleEditChange = (e) => {
+    setEditedData({ ...editedData, [e.target.name]: e.target.value });
+  };
+
+  const saveEdit = async () => {
     try {
-      await axios.post("http://localhost:8080/api/properties", property);
-      alert("Property added successfully!");
-      window.location.reload();
+      await axios.put(
+        `http://localhost:8080/api/properties/${editingProperty}`,
+        editedData
+      );
+      alert("Property updated!");
+      setEditingProperty(null);
+      fetchProperties();
     } catch (error) {
-      console.error("Error adding property:", error);
+      console.error("Error updating property:", error);
     }
   };
 
   return (
-    <div className="card p-3">
-      <h3>Add New Property</h3>
-      <form onSubmit={handleSubmit}>
-        <div className="mb-2">
-          <input
-            type="text"
-            name="title"
-            placeholder="Title"
-            className="form-control"
-            value={property.title}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-2">
-          <input
-            type="text"
-            name="description"
-            placeholder="Description"
-            className="form-control"
-            value={property.description}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-2">
-          <input
-            type="number"
-            name="price"
-            placeholder="Price"
-            className="form-control"
-            value={property.price}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-2">
-          <input
-            type="text"
-            name="location"
-            placeholder="Location"
-            className="form-control"
-            value={property.location}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div className="mb-2">
-          <select
-            name="type"
-            className="form-control"
-            value={property.type}
-            onChange={handleChange}
-          >
-            <option value="RENT">Rent</option>
-            <option value="SALE">Sale</option>
-          </select>
-        </div>
-        <button type="submit" className="btn btn-primary">
-          Add Property
-        </button>
-      </form>
+    <div className="mt-3">
+      <h3>Available Properties</h3>
+      <table className="table table-bordered table-striped mt-2">
+        <thead className="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {properties.map((prop) => (
+            <tr key={prop.id}>
+              <td>{prop.id}</td>
+              <td>
+                {editingProperty === prop.id ? (
+                  <input
+                    type="text"
+                    name="title"
+                    value={editedData.title}
+                    onChange={handleEditChange}
+                  />
+                ) : (
+                  prop.title
+                )}
+              </td>
+              <td>
+                {editingProperty === prop.id ? (
+                  <input
+                    type="text"
+                    name="description"
+                    value={editedData.description}
+                    onChange={handleEditChange}
+                  />
+                ) : (
+                  prop.description
+                )}
+              </td>
+              <td>
+                {editingProperty === prop.id ? (
+                  <input
+                    type="number"
+                    name="price"
+                    value={editedData.price}
+                    onChange={handleEditChange}
+                  />
+                ) : (
+                  prop.price
+                )}
+              </td>
+              <td>
+                {editingProperty === prop.id ? (
+                  <input
+                    type="text"
+                    name="location"
+                    value={editedData.location}
+                    onChange={handleEditChange}
+                  />
+                ) : (
+                  prop.location
+                )}
+              </td>
+              <td>
+                {editingProperty === prop.id ? (
+                  <select
+                    name="type"
+                    value={editedData.type}
+                    onChange={handleEditChange}
+                  >
+                    <option value="RENT">Rent</option>
+                    <option value="SALE">Sale</option>
+                  </select>
+                ) : (
+                  prop.type
+                )}
+              </td>
+              <td>
+                {editingProperty === prop.id ? (
+                  <>
+                    <button
+                      className="btn btn-success btn-sm me-2"
+                      onClick={saveEdit}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setEditingProperty(null)}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-warning btn-sm me-2"
+                      onClick={() => startEditing(prop)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => deleteProperty(prop.id)}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-export default AddProperty;
+export default PropertyList;
