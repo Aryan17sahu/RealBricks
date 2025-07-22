@@ -6,17 +6,37 @@ import lombok.*;
 
 @Entity
 @Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Property {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private int bhk; // 1,2,3,4
+
     private String title;
+
+    @Column(length = 1000)
     private String description;
+
     private Double price;
+
     private String location;
+
+    @Enumerated(EnumType.STRING)
+    private PropertyType type; // RENT or SALE
+
+    @Column(name = "image_url")
+    private String image_url;
+
+    @ManyToOne
+    @JoinColumn(name = "owner_id")
+    private User owner;
 
     public Long getId() {
         return id;
@@ -24,6 +44,14 @@ public class Property {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public int getBhk() {
+        return bhk;
+    }
+
+    public void setBhk(int bhk) {
+        this.bhk = bhk;
     }
 
     public String getTitle() {
@@ -66,6 +94,14 @@ public class Property {
         this.type = type;
     }
 
+    public String getImage_url() {
+        return image_url;
+    }
+
+    public void setImage_url(String image_url) {
+        this.image_url = image_url;
+    }
+
     public User getOwner() {
         return owner;
     }
@@ -73,15 +109,4 @@ public class Property {
     public void setOwner(User owner) {
         this.owner = owner;
     }
-
-    @Enumerated(EnumType.STRING)
-    private PropertyType type;
-
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
-    private User owner;
-}
-
-enum PropertyType {
-    RENT, SALE
 }

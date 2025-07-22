@@ -2,52 +2,52 @@ package com.app.realbricks.controller;
 
 
 import com.app.realbricks.model.Property;
-import com.app.realbricks.repository.PropertyRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.app.realbricks.service.PropertyService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/properties")
-@CrossOrigin(origins = "http://localhost:3000") // React frontend
+@CrossOrigin(origins = "http://localhost:3000")
 public class PropertyController {
 
-    @Autowired
-    private PropertyRepository propertyRepository;
+    private final PropertyService propertyService;
+
+    public PropertyController(PropertyService propertyService) {
+        this.propertyService = propertyService;
+    }
 
     @GetMapping
-    public List<Property> getAllProperties() {
-        return propertyRepository.findAll();
+    public List<Property> searchProperties(
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Integer bhk) {
+        return propertyService.searchProperties(location, type, bhk);
     }
 
     @GetMapping("/{id}")
     public Property getProperty(@PathVariable Long id) {
-        return propertyRepository.findById(id).orElse(null);
+        return propertyService.getPropertyById(id);
     }
+    @GetMapping("/api/properties")
+    public List<Property> getAllProperties() {
+        return propertyService.getAllProperties();
+    }
+
 
     @PostMapping
     public Property addProperty(@RequestBody Property property) {
-        return propertyRepository.save(property);
+        return propertyService.addProperty(property);
     }
 
     @PutMapping("/{id}")
-    public Property updateProperty(@PathVariable Long id, @RequestBody Property propertyDetails) {
-        Property existingProperty = propertyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Property not found with id " + id));
-
-        existingProperty.setTitle(propertyDetails.getTitle());
-        existingProperty.setDescription(propertyDetails.getDescription());
-        existingProperty.setPrice(propertyDetails.getPrice());
-        existingProperty.setLocation(propertyDetails.getLocation());
-        existingProperty.setType(propertyDetails.getType());
-
-        return propertyRepository.save(existingProperty);
+    public Property updateProperty(@PathVariable Long id, @RequestBody Property property) {
+        return propertyService.updateProperty(id, property);
     }
-
 
     @DeleteMapping("/{id}")
     public void deleteProperty(@PathVariable Long id) {
-        propertyRepository.deleteById(id);
+        propertyService.deleteProperty(id);
     }
 }
