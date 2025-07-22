@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
-const AddProperty = () => {
+const EditProperty = () => {
+  const { id } = useParams();
   const [property, setProperty] = useState({
     title: "",
     description: "",
@@ -16,9 +17,22 @@ const AddProperty = () => {
   const [previewImage, setPreviewImage] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    fetchProperty();
+  }, []);
+
+  const fetchProperty = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/properties/${id}`);
+      setProperty(response.data);
+      setPreviewImage(response.data.image_url);
+    } catch (error) {
+      console.error("Error fetching property:", error);
+    }
+  };
+
   const handleChange = (e) => {
     setProperty({ ...property, [e.target.name]: e.target.value });
-
     if (e.target.name === "image_url") {
       setPreviewImage(e.target.value);
     }
@@ -27,19 +41,17 @@ const AddProperty = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8080/api/properties", property);
-      alert("✅ Property added successfully!");
+      await axios.put(`http://localhost:8080/api/properties/${id}`, property);
+      alert("✅ Property updated successfully!");
       navigate("/agent-dashboard");
     } catch (error) {
-      console.error("Error adding property:", error);
+      console.error("Error updating property:", error);
     }
   };
 
   return (
     <div style={containerStyle}>
-      <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-        ➕ Add New Property
-      </h2>
+      <h2 style={{ textAlign: "center", marginBottom: "20px" }}>✏ Edit Property</h2>
       <form onSubmit={handleSubmit} style={formStyle}>
         <label style={labelStyle}>Title</label>
         <input
@@ -101,7 +113,6 @@ const AddProperty = () => {
           value={property.type}
           onChange={handleChange}
           style={inputStyle}
-          required
         >
           <option value="RENT">Rent</option>
           <option value="SALE">Sale</option>
@@ -114,7 +125,6 @@ const AddProperty = () => {
           value={property.image_url}
           onChange={handleChange}
           style={inputStyle}
-          placeholder="Paste image URL"
         />
 
         {previewImage && (
@@ -134,14 +144,14 @@ const AddProperty = () => {
         )}
 
         <button type="submit" style={buttonStyle}>
-          ✅ Save Property
+          ✅ Update Property
         </button>
       </form>
     </div>
   );
 };
 
-// ✅ Styles
+// ✅ Reuse same styles from AddProperty
 const containerStyle = {
   maxWidth: "500px",
   margin: "30px auto",
@@ -163,7 +173,7 @@ const inputStyle = {
 };
 
 const buttonStyle = {
-  background: "#28a745",
+  background: "#007bff",
   color: "white",
   padding: "10px",
   border: "none",
@@ -171,4 +181,4 @@ const buttonStyle = {
   cursor: "pointer",
 };
 
-export default AddProperty;
+export default EditProperty;
